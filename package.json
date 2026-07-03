@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "build:summon": "node scripts/build-summon-min.mjs"
+  }
+}

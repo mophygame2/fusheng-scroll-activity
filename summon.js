@@ -1,6 +1,6 @@
 const CONFIG = {
   timezone: "Asia/Taipei",
-  timeApi: "https://worldtimeapi.org/api/timezone/Asia/Taipei",
+  timeApi: "/api/time",
   windows: [
     {
       id: "day1",
@@ -454,14 +454,34 @@ function closeCardPreview() {
 
 function normalizeResults(results) {
   return results.map((card) => {
-    if (card.windowId || card.drawDate) return card;
+    const normalizedCard = normalizeCardAsset(card);
+    if (normalizedCard.windowId || normalizedCard.drawDate) return normalizedCard;
     const fallbackWindow = CONFIG.windows[0];
     return {
-      ...card,
+      ...normalizedCard,
       windowId: fallbackWindow.id,
       drawDate: fallbackWindow.date,
     };
   });
+}
+
+function normalizeCardAsset(card) {
+  const rarity = card?.rarity;
+  const count = CARD_COUNTS[rarity];
+  if (!rarity || !count) return card;
+
+  const match = String(card.image || card.id || "").match(new RegExp(`${rarity}-(\\d+)`, "i"));
+  if (!match) return card;
+
+  const serial = Number(match[1]);
+  if (!Number.isFinite(serial) || serial < 1 || serial <= count) return card;
+
+  const normalizedIndex = (serial - 1) % count;
+  return {
+    ...card,
+    id: `${rarity}-${String(normalizedIndex + 1).padStart(2, "0")}`,
+    image: getCardImage(rarity, normalizedIndex),
+  };
 }
 
 function getResultWindowId(card) {

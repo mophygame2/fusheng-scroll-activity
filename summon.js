@@ -60,10 +60,10 @@ const RARITY_META = {
 const NORMAL_RATES = [
   ["USR", 0.05],
   ["UR", 1],
-  ["SSR", 8.95],
-  ["SR", 20],
-  ["S", 30],
-  ["R", 40],
+  ["SSR", 5.91],
+  ["SR", 13.21],
+  ["S", 19.83],
+  ["R", 60],
 ];
 
 const GUARANTEE_RATES = [

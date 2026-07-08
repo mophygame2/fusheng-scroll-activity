@@ -1,12 +1,12 @@
 window.DENGZHOU_LINKS = {
-  openAt: "2026-07-09T00:00:00+08:00",
-  collection: "https://h5.touchieai.com/combo?code=9867d8f2-939e-480d-8796-276879c7e36f",
+  openAt: "2026-07-08T00:00:00+08:00",
+  collection: "https://h5.touchieai.com/combo?code=f734719a-b1f6-4720-b958-7ad65ab4bccf",
   characters: {
-    "01": "character-01.html",
-    "02": "character-02.html",
-    "03": "character-03.html",
-    "04": "character-04.html",
-    "05": "character-05.html",
+    "01": "https://h5.touchieai.com/character?code=3ae3876f-24de-4c65-9730-44d497315082",
+    "02": "https://h5.touchieai.com/character?code=61870539-a93f-43e0-a60e-43612d40c30f",
+    "03": "https://h5.touchieai.com/character?code=aeb5d7bf-f3da-4a65-979b-cd85870a5667",
+    "04": "https://h5.touchieai.com/character?code=43d4db6b-2b77-40da-a5c5-1b9bd1078247",
+    "05": "https://h5.touchieai.com/character?code=f9c638a6-0cdc-40c0-bcb7-ed655cf7360b",
   },
   dailyLanterns: [
     {

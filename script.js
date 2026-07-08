@@ -1,6 +1,7 @@
 const countdown = document.querySelector("[data-countdown]");
 const countdownLabel = document.querySelector("[data-countdown-label]");
 const countdownOpenLink = document.querySelector(".countdown-open-link");
+const countdownPending = document.querySelector(".countdown-pending");
 const characterOpenLinks = document.querySelectorAll("[data-character-link]");
 const linkConfig = window.DENGZHOU_LINKS || {};
 const assetUrl = (path) => path;
@@ -45,6 +46,16 @@ function applyLinkConfig() {
 }
 
 applyLinkConfig();
+
+function getLinkOpenTime() {
+  const configuredOpenAt = linkConfig.openAt ? new Date(linkConfig.openAt).getTime() : 0;
+  return Number.isFinite(configuredOpenAt) ? configuredOpenAt : 0;
+}
+
+function areOfficialLinksReady() {
+  const openTime = getLinkOpenTime();
+  return !openTime || Date.now() >= openTime;
+}
 
 function preloadImage(src) {
   return new Promise((resolve) => {
@@ -427,10 +438,34 @@ function updateCountdown() {
     if (element) element.textContent = String(value).padStart(2, "0");
   });
 
-  if (countdownLabel) countdownLabel.textContent = isOpen ? "燈晝開啟" : "距離燈晝重啟";
-  if (countdownOpenLink) countdownOpenLink.hidden = !isOpen || !linkConfig.collection;
+  const linksReady = areOfficialLinksReady();
+  const isWaitingForLinks = isOpen && !linksReady;
+
+  if (countdownLabel) {
+    countdownLabel.textContent = isOpen
+      ? (linksReady ? "燈晝開啟" : "咒令待公開")
+      : "距離燈晝重啟";
+  }
+  if (countdownPending) countdownPending.hidden = !isWaitingForLinks;
+  if (countdownOpenLink) countdownOpenLink.hidden = !isOpen || !linksReady || !linkConfig.collection;
   characterOpenLinks.forEach((link) => {
-    link.hidden = !isOpen || link.getAttribute("href") === "#";
+    const card = link.closest("[data-character]");
+    const characterId = card?.dataset.character;
+    const characterUrl = linkConfig.characters?.[characterId];
+    const canOpenCharacter = isOpen && linksReady && Boolean(characterUrl);
+
+    link.hidden = !isOpen;
+    link.classList.toggle("is-disabled", !canOpenCharacter);
+    link.setAttribute("aria-disabled", String(!canOpenCharacter));
+    link.textContent = canOpenCharacter ? "執燈相見" : "靜候咒令";
+
+    if (canOpenCharacter) {
+      link.href = characterUrl;
+      link.tabIndex = 0;
+    } else {
+      link.removeAttribute("href");
+      link.tabIndex = -1;
+    }
   });
 }
 

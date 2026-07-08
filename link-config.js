@@ -1,4 +1,5 @@
 window.DENGZHOU_LINKS = {
+  openAt: "2026-07-09T00:00:00+08:00",
   collection: "https://h5.touchieai.com/combo?code=9867d8f2-939e-480d-8796-276879c7e36f",
   characters: {
     "01": "character-01.html",

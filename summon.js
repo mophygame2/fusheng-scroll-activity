@@ -148,6 +148,7 @@ const resultKey = makeKey("result");
 
 const statusEl = document.querySelector("[data-status]");
 const gemsEls = document.querySelectorAll("[data-gems]");
+const pityRemainingEls = document.querySelectorAll("[data-pity-remaining]");
 const cardCountEls = document.querySelectorAll("[data-card-count]");
 const codeForm = document.querySelector("[data-code-form]");
 const codeInput = document.querySelector("#serial-code");
@@ -355,11 +356,18 @@ function renderAll(isServerSynced = null) {
   gemsEls.forEach((element) => {
     element.textContent = String(state.gems);
   });
+  pityRemainingEls.forEach((element) => {
+    element.textContent = String(getPityRemaining());
+  });
   drawButtons.forEach((button) => {
     const count = Number(button.dataset.draw);
     button.disabled = !drawWindow || state.gems < count * CONFIG.drawCost;
   });
   renderResults(loadResults());
+}
+
+function getPityRemaining() {
+  return Math.max(1, 10 - Math.min(Number(state.pityCount || 0), 9));
 }
 
 function renderResults(results, highlightCount = 0) {

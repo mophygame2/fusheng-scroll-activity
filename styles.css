@@ -2646,6 +2646,98 @@ footer {
   box-shadow: 0 0 28px rgba(222, 142, 42, 0.28);
 }
 
+.legal-dialog[hidden] {
+  display: none;
+}
+
+.legal-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 3vw, 36px);
+}
+
+.legal-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 4, 4, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.legal-dialog-panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(1040px, 94vw);
+  height: min(820px, 88svh);
+  overflow: hidden;
+  border: 1px solid rgba(190, 151, 86, 0.42);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(217, 151, 77, 0.14), transparent 44%),
+    rgba(18, 12, 10, 0.96);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.52), inset 0 0 36px rgba(206, 132, 48, 0.08);
+}
+
+.legal-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px clamp(18px, 3vw, 30px);
+  border-bottom: 1px solid rgba(190, 151, 86, 0.24);
+}
+
+.legal-dialog-heading .eyebrow {
+  margin: 0;
+  color: rgba(229, 189, 116, 0.82);
+  font-size: 0.7rem;
+}
+
+.legal-dialog-heading h2 {
+  margin: 0;
+  color: #f4dfb7;
+  font-size: clamp(1.35rem, 3vw, 2.2rem);
+  letter-spacing: 0.16em;
+}
+
+.legal-dialog-open {
+  margin-left: auto;
+  color: rgba(244, 223, 183, 0.82);
+  border-bottom: 1px solid rgba(244, 223, 183, 0.42);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+}
+
+.legal-dialog-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #f6f1e8;
+}
+
+.legal-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  color: #f4dfb7;
+  border: 1px solid rgba(190, 151, 86, 0.34);
+  border-radius: 999px;
+  background: rgba(18, 12, 10, 0.76);
+  font-size: 1.5rem;
+}
+
+.legal-dialog-close:hover,
+.legal-dialog-close:focus-visible {
+  color: #fff7df;
+  border-color: rgba(245, 210, 143, 0.78);
+  box-shadow: 0 0 22px rgba(205, 121, 53, 0.28);
+}
+
 .lantern-ignite[hidden] {
   display: none;
 }
@@ -3442,6 +3534,29 @@ footer {
 
   .dialog-panel {
     padding: 48px 26px 36px;
+  }
+
+  .legal-dialog {
+    padding: 10px;
+  }
+
+  .legal-dialog-panel {
+    width: 100%;
+    height: 92svh;
+  }
+
+  .legal-dialog-heading {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 14px 54px 14px 16px;
+  }
+
+  .legal-dialog-heading .eyebrow {
+    width: 100%;
+  }
+
+  .legal-dialog-open {
+    margin-left: 0;
   }
 }
 

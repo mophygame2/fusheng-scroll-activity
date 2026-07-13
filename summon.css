@@ -2754,7 +2754,8 @@ button.info-pill {
 }
 
 .summon-modal.result-section,
-.summon-modal.rate-section {
+.summon-modal.rate-section,
+.summon-modal.summon-legal-section {
   width: auto;
   margin: 0;
   padding: clamp(18px, 4vw, 44px);
@@ -2808,6 +2809,58 @@ button.info-pill {
   width: auto;
   margin: 18px auto 0;
   transform: none;
+}
+
+.summon-legal-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: min(820px, 90svh);
+  overflow: hidden;
+  padding: 0;
+}
+
+.summon-legal-panel::before {
+  z-index: 2;
+}
+
+.summon-legal-heading {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: clamp(18px, 3vw, 28px) clamp(22px, 4vw, 38px);
+  border-bottom: 1px solid rgba(210, 157, 92, 0.28);
+}
+
+.summon-legal-heading .summon-eyebrow {
+  margin: 0;
+  color: rgba(245, 216, 169, 0.74);
+  font-size: 0.72rem;
+}
+
+.summon-legal-heading h2 {
+  margin: 0;
+  color: #f4d7a8;
+  font-size: clamp(1.55rem, 3vw, 2.4rem);
+  letter-spacing: 0.16em;
+}
+
+.summon-legal-heading a {
+  margin-left: auto;
+  color: rgba(245, 216, 169, 0.86);
+  border-bottom: 1px solid rgba(245, 216, 169, 0.42);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+}
+
+.summon-legal-frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #f6f1e8;
 }
 
 body.is-modal-open {
@@ -4474,6 +4527,10 @@ body.is-card-preview-open {
     top: max(162px, calc(env(safe-area-inset-top) + 162px));
   }
 
+  .summon-top-actions .info-pill[data-modal-open="legal"] {
+    top: max(232px, calc(env(safe-area-inset-top) + 238px));
+  }
+
   .card-pool {
     display: grid;
     grid-template-columns: clamp(42px, 12vw, 60px) minmax(0, 1fr) clamp(64px, 16vw, 90px);
@@ -4684,6 +4741,31 @@ body.is-card-preview-open {
 
   .card-pool .draw-button {
     min-height: clamp(62px, 10vh, 82px);
+  }
+}
+
+@media (max-width: 700px) {
+  .summon-legal-section {
+    padding: 10px;
+  }
+
+  .summon-legal-panel {
+    width: 100%;
+    height: 92svh;
+  }
+
+  .summon-legal-heading {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 16px 54px 14px 18px;
+  }
+
+  .summon-legal-heading .summon-eyebrow {
+    width: 100%;
+  }
+
+  .summon-legal-heading a {
+    margin-left: 0;
   }
 }
 

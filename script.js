@@ -781,6 +781,8 @@ characterGrid?.addEventListener("scroll", () => {
 const navToggle = document.querySelector(".nav-toggle");
 const siteHeader = document.querySelector(".site-header");
 const siteNav = document.querySelector(".site-nav");
+const legalStatementLink = document.querySelector(".legal-statement-link");
+const legalDialog = document.querySelector(".legal-dialog");
 
 navToggle?.addEventListener("click", () => {
   const isOpen = siteNav.classList.toggle("is-open");
@@ -793,6 +795,29 @@ siteNav?.querySelectorAll("a").forEach((link) => {
     navToggle?.setAttribute("aria-expanded", "false");
   });
 });
+
+function openLegalDialog() {
+  if (!legalDialog) return;
+  legalDialog.hidden = false;
+  document.body.style.overflow = "hidden";
+  legalDialog.querySelector(".legal-dialog-close")?.focus();
+}
+
+function closeLegalDialog() {
+  if (!legalDialog) return;
+  legalDialog.hidden = true;
+  document.body.style.overflow = "";
+}
+
+legalStatementLink?.addEventListener("click", (event) => {
+  event.preventDefault();
+  siteNav?.classList.remove("is-open");
+  navToggle?.setAttribute("aria-expanded", "false");
+  openLegalDialog();
+});
+
+legalDialog?.querySelector(".legal-dialog-close")?.addEventListener("click", closeLegalDialog);
+legalDialog?.querySelector(".legal-dialog-backdrop")?.addEventListener("click", closeLegalDialog);
 
 const darkNavSections = document.querySelectorAll(".creator, .final-cta");
 
@@ -964,5 +989,6 @@ document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   if (lanternDialog && !lanternDialog.hidden) closeLanternDialog();
   if (rewardDialog && !rewardDialog.hidden) closeRewardDialog();
+  if (legalDialog && !legalDialog.hidden) closeLegalDialog();
   if (dialog && !dialog.hidden) closeDialog();
 });

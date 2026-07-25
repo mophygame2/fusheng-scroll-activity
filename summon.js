@@ -153,6 +153,7 @@ const CARD_EFFECT_VIDEOS = {
 const stateKey = makeKey("state");
 const codeKey = makeKey("code");
 const resultKey = makeKey("result");
+const pendingKey = makeKey("pending");
 
 const statusEl = document.querySelector("[data-status]");
 const gemsEls = document.querySelectorAll("[data-gems]");
@@ -198,6 +199,7 @@ init();
 async function init() {
   const initialLoading = prepareInitialLoading();
   renderAll();
+  recoverPendingDraw();
   queueAssetPreload();
   queueEffectVideoWarmup();
   if (state.gems >= CONFIG.drawCost) queueCommonEffectVideoPreload();
@@ -307,6 +309,14 @@ function handleCodeSubmit(event) {
 
 async function handleDraw(count) {
   playUiSound("summon");
+  const pendingDraw = loadPendingDraw();
+  if (pendingDraw) {
+    collectPendingDraw(pendingDraw);
+    setCodeMessage("已先收錄上一次未完成的召喚結果，請至我的卡片查看。", true);
+    renderAll();
+    return;
+  }
+
   const drawWindow = getCurrentDrawWindow();
   if (!drawWindow) {
     setCodeMessage("目前不在抽卡活動開放時段。", false);
@@ -319,34 +329,49 @@ async function handleDraw(count) {
     return;
   }
 
-  state.gems -= totalCost;
   const pulls = [];
+  const drawId = `${drawWindow.id}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const nextState = {
+    ...state,
+    gems: state.gems - totalCost,
+    pityCount: state.pityCount,
+  };
+
   for (let index = 0; index < count; index += 1) {
-    const isGuaranteed = state.pityCount === 9;
+    const isGuaranteed = nextState.pityCount === 9;
     const rarity = rollRarity(isGuaranteed);
-    pulls.push(pickCard(rarity));
-    state.pityCount = isGuaranteed ? 0 : state.pityCount + 1;
+    pulls.push({
+      ...pickCard(rarity),
+      windowId: drawWindow.id,
+      drawDate: drawWindow.date,
+      drawId,
+      drawIndex: index,
+    });
+    nextState.pityCount = isGuaranteed ? 0 : nextState.pityCount + 1;
   }
 
-  saveState();
-  renderAll();
-  await playDrawCinematic(pulls);
-  const stampedPulls = pulls.map((card) => ({
-    ...card,
+  activeResultTab = drawWindow.id;
+  const pendingNext = {
+    id: drawId,
     windowId: drawWindow.id,
     drawDate: drawWindow.date,
-  }));
-  activeResultTab = drawWindow.id;
-  const previousResults = loadResults();
-  const nextResults = [...stampedPulls, ...previousResults].slice(0, 60);
-  saveResults(nextResults);
-  renderResults(nextResults, stampedPulls.length);
+    nextIndex: 0,
+    cards: pulls,
+    createdAt: new Date().toISOString(),
+  };
+
+  savePendingDraw(pendingNext);
+  state = nextState;
+  saveState();
+  renderAll();
+  await playPendingDraw(pendingNext);
 }
 
 function renderAll(isServerSynced = null) {
   const activeWindow = getActiveWindow();
   const drawWindow = getCurrentDrawWindow();
   const upcoming = getUpcomingWindow();
+  const pendingDraw = loadPendingDraw();
   const syncedText = isServerSynced === true ? "線上台北時間已校正。" : isServerSynced === false ? "" : "";
 
   if (statusEl) {
@@ -369,7 +394,7 @@ function renderAll(isServerSynced = null) {
   });
   drawButtons.forEach((button) => {
     const count = Number(button.dataset.draw);
-    button.disabled = !drawWindow || state.gems < count * CONFIG.drawCost;
+    button.disabled = Boolean(pendingDraw) || !drawWindow || state.gems < count * CONFIG.drawCost;
   });
   renderResults(loadResults());
 }
@@ -678,6 +703,71 @@ function playGemBurst(amount = CONFIG.gemsPerCode) {
   }, 1500);
 }
 
+function recoverPendingDraw() {
+  const pendingDraw = loadPendingDraw();
+  if (!pendingDraw) return;
+  collectPendingDraw(pendingDraw);
+  setCodeMessage("偵測到未完成的召喚，已自動收錄剩餘卡片，盞燈不會重複扣除。", true);
+  renderAll();
+}
+
+async function playPendingDraw(pendingDraw) {
+  if (!pendingDraw?.cards?.length) {
+    clearPendingDraw();
+    return;
+  }
+
+  for (let index = Number(pendingDraw.nextIndex || 0); index < pendingDraw.cards.length; index += 1) {
+    const card = pendingDraw.cards[index];
+    await playSingleDrawCinematic(card, index, pendingDraw.cards.length);
+    appendResultCards([card]);
+    const latestPending = loadPendingDraw();
+    if (!latestPending || latestPending.id !== pendingDraw.id) return;
+    latestPending.nextIndex = index + 1;
+    savePendingDraw(latestPending);
+    renderResults(loadResults(), 1);
+  }
+
+  clearPendingDraw();
+  renderAll();
+  renderResults(loadResults(), pendingDraw.cards.length);
+}
+
+function collectPendingDraw(pendingDraw) {
+  if (!pendingDraw?.cards?.length) {
+    clearPendingDraw();
+    return;
+  }
+
+  const startIndex = Math.max(0, Number(pendingDraw.nextIndex || 0));
+  appendResultCards(pendingDraw.cards.slice(startIndex));
+  activeResultTab = pendingDraw.windowId || activeResultTab;
+  clearPendingDraw();
+  renderResults(loadResults(), pendingDraw.cards.length - startIndex);
+}
+
+function appendResultCards(cardsToAppend) {
+  if (!Array.isArray(cardsToAppend) || !cardsToAppend.length) return loadResults();
+
+  const previousResults = loadResults();
+  const existingKeys = new Set(previousResults.map(getResultUniqueKey).filter(Boolean));
+  const freshCards = cardsToAppend.filter((card) => {
+    const key = getResultUniqueKey(card);
+    if (!key) return true;
+    if (existingKeys.has(key)) return false;
+    existingKeys.add(key);
+    return true;
+  });
+  const nextResults = [...freshCards, ...previousResults].slice(0, 60);
+  saveResults(nextResults);
+  return nextResults;
+}
+
+function getResultUniqueKey(card) {
+  if (!card?.drawId && card?.drawIndex === undefined) return "";
+  return `${card.drawId || "draw"}:${Number(card.drawIndex || 0)}`;
+}
+
 async function playDrawCinematic(pulls) {
   if (!cinematic) return;
 
@@ -776,11 +866,13 @@ function playEffectVideo(rarity) {
   return new Promise((resolve) => {
     let resolved = false;
     let pauseGuard = true;
+    const maxPlaybackTimer = window.setTimeout(() => finish(), 5200);
     const needsBufferGuard = !loadedEffectVideos.has(source);
     const finish = () => {
       if (resolved) return;
       resolved = true;
       pauseGuard = false;
+      window.clearTimeout(maxPlaybackTimer);
       cinematic.classList.remove("is-buffering-video");
       cinematicVideo.removeEventListener("ended", finish);
       cinematicVideo.removeEventListener("error", finish);
@@ -1161,6 +1253,31 @@ function loadResults() {
 
 function saveResults(results) {
   localStorage.setItem(resultKey, encodeStore(results));
+}
+
+function loadPendingDraw() {
+  try {
+    const value = decodeStore(localStorage.getItem(pendingKey));
+    if (!value || !Array.isArray(value.cards)) return null;
+    return {
+      id: typeof value.id === "string" ? value.id : "",
+      windowId: typeof value.windowId === "string" ? value.windowId : "",
+      drawDate: typeof value.drawDate === "string" ? value.drawDate : "",
+      nextIndex: Math.max(0, Number(value.nextIndex || 0)),
+      cards: value.cards,
+      createdAt: typeof value.createdAt === "string" ? value.createdAt : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function savePendingDraw(pendingDraw) {
+  localStorage.setItem(pendingKey, encodeStore(pendingDraw));
+}
+
+function clearPendingDraw() {
+  localStorage.removeItem(pendingKey);
 }
 
 function encodeStore(value) {

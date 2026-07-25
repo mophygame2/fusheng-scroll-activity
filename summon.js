@@ -35,6 +35,14 @@ const CONFIG = {
       gems: 5000,
     },
     {
+      id: "day2-thanks",
+      date: "2026-07-26",
+      start: "18:00",
+      end: "22:00",
+      code: "餘燼再燃",
+      gems: 1000,
+    },
+    {
       id: "fix1",
       date: "2026-07-25",
       start: "16:00",
@@ -42,17 +50,25 @@ const CONFIG = {
       code: "修復補償",
       gems: 1500,
     },
+    {
+      id: "fix2",
+      date: "2026-07-26",
+      start: "16:00",
+      end: "22:00",
+      code: "修復初燈",
+      gems: 1500,
+    }
   ],
   gemsPerCode: 1000,
   drawCost: 100,
   testCodes: [
-    {
+/*     {
       code: "我有很多錢",
       id: "rich-test",
       startDate: "2026-06-30",
       endDate: "2026-07-07",
       gems: 5000,
-    },
+    }, */
   ],
 };
 

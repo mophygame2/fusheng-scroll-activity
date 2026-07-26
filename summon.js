@@ -373,6 +373,7 @@ function getPityRemaining() {
 function renderResults(results, highlightCount = 0) {
   if (!resultsEl) return;
   const normalizedResults = normalizeResults(results);
+  ensureVisibleResultTab();
   const visibleResults = normalizedResults.filter((card) => getResultWindowId(card) === activeResultTab);
   resultsEl.innerHTML = "";
   renderResultTabs(normalizedResults);
@@ -406,6 +407,7 @@ function renderResults(results, highlightCount = 0) {
 }
 
 function renderResultTabs(results) {
+  ensureVisibleResultTab();
   resultTabButtons.forEach((button) => {
     const tabId = button.dataset.resultTab;
     const count = results.filter((card) => getResultWindowId(card) === tabId).length;
@@ -414,6 +416,12 @@ function renderResultTabs(results) {
     button.setAttribute("aria-selected", String(isActive));
     button.textContent = `${getWindowLabel(tabId)} 抽卡紀錄（${Math.min(count, 10)}/10）`;
   });
+}
+
+function ensureVisibleResultTab() {
+  if (!resultTabButtons.length) return;
+  const tabIds = [...resultTabButtons].map((button) => button.dataset.resultTab);
+  if (!tabIds.includes(activeResultTab)) activeResultTab = tabIds[0];
 }
 
 function handleResultCardClick(event) {

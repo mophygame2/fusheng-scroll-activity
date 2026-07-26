@@ -57,7 +57,108 @@ const CONFIG = {
       end: "22:00",
       code: "修復初燈",
       gems: 1500,
-    }
+    },
+    {
+      id: "week-lion-head",
+      startDate: "2026-07-27",
+      endDate: "2026-08-02",
+      start: "00:00",
+      end: "24:00",
+      code: "紅燒獅子頭",
+      gems: 1000,
+    },
+    {
+      id: "week-night-poem",
+      startDate: "2026-07-27",
+      endDate: "2026-08-02",
+      start: "00:00",
+      end: "24:00",
+      code: "夜沐若詩",
+      gems: 1000,
+    },
+    {
+      id: "week-pine-kite",
+      startDate: "2026-07-27",
+      endDate: "2026-08-02",
+      start: "00:00",
+      end: "24:00",
+      code: "松鳶白珀",
+      gems: 1000,
+    },
+    {
+      id: "week-usagi-psuke",
+      startDate: "2026-07-27",
+      endDate: "2026-08-02",
+      start: "00:00",
+      end: "24:00",
+      code: "招財Usagi與福氣P助",
+      gems: 1000,
+    },
+    {
+      id: "week-free-view",
+      startDate: "2026-07-27",
+      endDate: "2026-08-02",
+      start: "00:00",
+      end: "24:00",
+      code: "世界很大，工薪很低，但我賺到的風景免費",
+      gems: 1000,
+    },
+    {
+      id: "daily-first-light",
+      date: "2026-07-27",
+      start: "00:00",
+      end: "24:00",
+      code: "初燈之日",
+      gems: 1500,
+    },
+    {
+      id: "daily-dengzhou-again",
+      date: "2026-07-28",
+      start: "00:00",
+      end: "24:00",
+      code: "再續燈晝",
+      gems: 1500,
+    },
+    {
+      id: "daily-burning-on",
+      date: "2026-07-29",
+      start: "00:00",
+      end: "24:00",
+      code: "燃燈未盡",
+      gems: 1500,
+    },
+    {
+      id: "daily-xu-mingyin",
+      date: "2026-07-30",
+      start: "00:00",
+      end: "24:00",
+      code: "絮於鳴音",
+      gems: 1500,
+    },
+    {
+      id: "daily-muruo-spring",
+      date: "2026-07-31",
+      start: "00:00",
+      end: "24:00",
+      code: "沐若於春",
+      gems: 1500,
+    },
+    {
+      id: "daily-ink-lantern",
+      date: "2026-08-01",
+      start: "00:00",
+      end: "24:00",
+      code: "花燈如墨",
+      gems: 1500,
+    },
+    {
+      id: "daily-dengzhou-yujin-xu",
+      date: "2026-08-02",
+      start: "00:00",
+      end: "24:00",
+      code: "燈晝餘燼：絮",
+      gems: 1500,
+    },
   ],
   gemsPerCode: 1000,
   drawCost: 100,
@@ -616,20 +717,30 @@ function getActiveRedeemCode(code) {
   }
 
   for (const codeItem of CONFIG.redeemCodes || []) {
-    if (clock.date !== codeItem.date) continue;
+    if (!isRedeemCodeDateActive(codeItem)) continue;
     if (code !== codeItem.code) continue;
     if (compareTime(clock.time, codeItem.start) < 0) continue;
     if (compareTime(clock.time, codeItem.end) >= 0) continue;
     return {
       windowItem: {
-        id: `redeem-${codeItem.date}`,
-        date: codeItem.date,
+        id: `redeem-${codeItem.id}`,
+        date: codeItem.date || codeItem.startDate,
       },
       codeItem,
     };
   }
 
   return null;
+}
+
+function isRedeemCodeDateActive(codeItem) {
+  if (codeItem.startDate || codeItem.endDate) {
+    const startDate = codeItem.startDate || codeItem.date;
+    const endDate = codeItem.endDate || codeItem.date;
+    return clock.date >= startDate && clock.date <= endDate;
+  }
+
+  return clock.date === codeItem.date;
 }
 
 function getWindowCodes(windowItem) {

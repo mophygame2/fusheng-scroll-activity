@@ -160,6 +160,14 @@ const CONFIG = {
       gems: 1500,
     },
   ],
+  bonusDrawWindow: {
+    id: "bonus",
+    date: "2026-07-27",
+    startDate: "2026-07-27",
+    endDate: "2026-08-02",
+    start: "00:00",
+    end: "24:00",
+  },
   gemsPerCode: 1000,
   drawCost: 100,
   testCodes: [
@@ -345,6 +353,10 @@ async function init() {
   modalCloseButtons.forEach((button) => {
     button.addEventListener("click", closeActiveModal);
   });
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest("[data-modal-close]")) return;
+    closeActiveModal();
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     if (cardPreview && !cardPreview.hidden) {
@@ -467,7 +479,10 @@ async function handleDraw(count) {
     nextState.pityCount = isGuaranteed ? 0 : nextState.pityCount + 1;
   }
 
-  activeResultTab = drawWindow.id;
+  activeResultTab = getResultTabId({
+    windowId: drawWindow.id,
+    drawDate: drawWindow.date,
+  });
   const pendingNext = {
     id: drawId,
     windowId: drawWindow.id,
@@ -494,6 +509,8 @@ function renderAll(isServerSynced = null) {
   if (statusEl) {
     if (activeWindow) {
       statusEl.textContent = `${formatDate(activeWindow.date)} ${activeWindow.start}-${activeWindow.end} 召令開啟中。${syncedText}`;
+    } else if (drawWindow?.id === "bonus") {
+      statusEl.textContent = `加碼召令開啟中，可抽卡至 8/2 23:59。${syncedText}`;
     } else if (drawWindow?.isTest) {
       statusEl.textContent = `測試召令開啟中，可測試抽卡至 ${formatDate(drawWindow.endDate)}。${syncedText}`;
     } else if (upcoming) {
@@ -524,11 +541,14 @@ function renderResults(results, highlightCount = 0) {
   if (!resultsEl) return;
   const normalizedResults = normalizeResults(results);
   ensureVisibleResultTab();
-  const visibleResults = normalizedResults.filter((card) => getResultWindowId(card) === activeResultTab);
+  const visibleResults = normalizedResults.filter((card) => getResultTabId(card) === activeResultTab);
   resultsEl.innerHTML = "";
   renderResultTabs(normalizedResults);
   cardCountEls.forEach((element) => {
-    element.textContent = `${getWindowLabel(activeResultTab)} 已抽 ${Math.min(visibleResults.length, 10)}/10 張`;
+    const countText = activeResultTab === "bonus"
+      ? `${visibleResults.length} 張`
+      : `${Math.min(visibleResults.length, 10)}/10 張`;
+    element.textContent = `${getWindowLabel(activeResultTab)} 已抽 ${countText}`;
   });
   visibleResults.forEach((card, index) => {
     const meta = RARITY_META[card.rarity];
@@ -560,11 +580,12 @@ function renderResultTabs(results) {
   ensureVisibleResultTab();
   resultTabButtons.forEach((button) => {
     const tabId = button.dataset.resultTab;
-    const count = results.filter((card) => getResultWindowId(card) === tabId).length;
+    const count = results.filter((card) => getResultTabId(card) === tabId).length;
     const isActive = tabId === activeResultTab;
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-selected", String(isActive));
-    button.textContent = `${getWindowLabel(tabId)} 抽卡紀錄（${Math.min(count, 10)}/10）`;
+    const countText = tabId === "bonus" ? `${count}` : `${Math.min(count, 10)}/10`;
+    button.textContent = `${getWindowLabel(tabId)} 抽卡紀錄（${countText}）`;
   });
 }
 
@@ -647,14 +668,22 @@ function getResultWindowId(card) {
   return CONFIG.windows.find((windowItem) => windowItem.date === card.drawDate)?.id || CONFIG.windows[0].id;
 }
 
+function getResultTabId(card) {
+  const windowId = getResultWindowId(card);
+  if (windowId === "day1" || windowId === "day2") return windowId;
+  if (card.drawDate && card.drawDate >= "2026-07-27") return "bonus";
+  return "bonus";
+}
+
 function getWindowLabel(windowId) {
+  if (windowId === "bonus") return "加碼活動";
   if (windowId === "rich-test") return "測試";
   const windowItem = CONFIG.windows.find((item) => item.id === windowId) || CONFIG.windows[0];
   return formatDate(windowItem.date);
 }
 
 function getDefaultResultTab() {
-  return CONFIG.windows.find((windowItem) => windowItem.date === clock?.date)?.id || CONFIG.windows[0].id;
+  return CONFIG.windows.find((windowItem) => windowItem.date === clock?.date)?.id || "bonus";
 }
 
 function openModal(name) {
@@ -690,6 +719,12 @@ function getActiveWindow() {
 function getCurrentDrawWindow() {
   const activeWindow = getActiveWindow();
   if (activeWindow) return activeWindow;
+  if (isBonusDrawWindowActive()) {
+    return {
+      ...CONFIG.bonusDrawWindow,
+      date: clock.date,
+    };
+  }
   if (!isTestModeActive()) return null;
   return {
     id: state.testModeId || "rich-test",
@@ -697,6 +732,15 @@ function getCurrentDrawWindow() {
     endDate: state.testModeUntil,
     isTest: true,
   };
+}
+
+function isBonusDrawWindowActive() {
+  const windowItem = CONFIG.bonusDrawWindow;
+  if (!windowItem) return false;
+  if (clock.date < windowItem.startDate || clock.date > windowItem.endDate) return false;
+  if (clock.date === windowItem.startDate && compareTime(clock.time, windowItem.start) < 0) return false;
+  if (clock.date === windowItem.endDate && compareTime(clock.time, windowItem.end) >= 0) return false;
+  return true;
 }
 
 function getUpcomingWindow() {
@@ -868,7 +912,10 @@ function collectPendingDraw(pendingDraw) {
 
   const startIndex = Math.max(0, Number(pendingDraw.nextIndex || 0));
   appendResultCards(pendingDraw.cards.slice(startIndex));
-  activeResultTab = pendingDraw.windowId || activeResultTab;
+  activeResultTab = getResultTabId({
+    windowId: pendingDraw.windowId,
+    drawDate: pendingDraw.drawDate,
+  });
   clearPendingDraw();
   renderResults(loadResults(), pendingDraw.cards.length - startIndex);
 }
